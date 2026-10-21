@@ -255,6 +255,17 @@ table.lg{width:100%;border-collapse:collapse;font-variant-numeric:tabular-nums;f
 .pbtn .arr{font-size:1.5em;line-height:1}
 .pitchwrap.choosing{outline:4px solid var(--sun);outline-offset:-4px}
 .lvchip.pro{background:var(--warn)}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1;font-size:.72em;margin:0 .08em}
+.frac>span:first-child{border-bottom:.09em solid currentColor;padding:0 .12em .04em}
+.frac>span:last-child{padding-top:.04em}
+.qtext.long{font-size:clamp(26px,6.4vw,46px);max-width:22ch;text-wrap:balance}
+.ans.word{font-size:clamp(17px,4.2vw,26px);line-height:1.15;padding:6px}
+.ans.dec{font-size:clamp(24px,6vw,40px)}
+.lvgroup{display:flex;flex-direction:column;gap:8px}
+.lvgroup h3{font-size:18px;margin-top:6px}
+.acc{margin-left:auto;align-self:center;font-size:12px;font-weight:900;padding:2px 8px;border-radius:99px;background:var(--chalk-2);color:var(--ink-soft);white-space:nowrap}
+.acc.good{background:var(--good-soft);color:var(--good)}
+.acc.weak{background:#ffe3e3;color:#a51111}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition:none!important}}
 </style>
 
@@ -605,6 +616,7 @@ const rnd=(a,b)=>a+Math.floor(Math.random()*(b-a+1));
 const pick=a=>a[Math.floor(Math.random()*a.length)];
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;};
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtMath=h=>String(h).replace(/(\d+|\?)\/(\d+|\?)/g,'<span class="frac"><span>$1</span><span>$2</span></span>');
 const wait=ms=>new Promise(r=>setTimeout(r,RM?Math.min(ms,400):ms));
 const RM=window.matchMedia&&matchMedia('(prefers-reduced-motion: reduce)').matches;
 const seq=(a,b)=>{const r=[];for(let i=a;i<=b;i++)r.push(i);return r.join(', ');};
@@ -632,9 +644,9 @@ const PLAYERS=[
  {id:'sol',name:'Sol Supersonic',pos:'Winger',num:17,price:160,skin:3,hair:0,cel:'flies like an aeroplane round the pitch!'},
  {id:'ivy',name:'Ivy Ice',pos:'Striker',num:14,price:180,skin:0,hair:1,cel:'stays cool as ice and gives a wink!'}];
 const START_LEVELS=[
- {label:'Reception',desc:'Counting to 10',lv:1},{label:'Year 1',desc:'Adding small numbers',lv:4},
- {label:'Year 2',desc:'Adding to 20, first times tables',lv:6},{label:'Year 3',desc:'2-digit adding, 3, 4, 8 tables',lv:10},
- {label:'Year 4 +',desc:'All tables to 12 × 12 (good for testing)',lv:13}];
+ {label:'Reception',desc:'Counting, adding and taking away to 5',lv:1},{label:'Year 1',desc:'To 20, halves, quarters, o\'clock',lv:8},
+ {label:'Year 2',desc:'2, 5, 10 tables, thirds, telling time',lv:14},{label:'Year 3',desc:'3 and 4 tables, fractions of amounts',lv:24},
+ {label:'Year 4 +',desc:'All tables to 12 × 12, 24-hour clock',lv:32}];
 const TEAM_IDEAS=['Rocket Rovers','Thunder Tigers','Super Strikers','Galaxy United','Dino Dynamos','Lightning FC'];
 
 const KEY='maths-match-day-v1';
@@ -664,7 +676,7 @@ function cells(a,b,q){const c=[];for(let i=0;i<20;i++)c.push(i<a?'r':i<a+b?'b':i
 function frameInner(cs,labels,ox){const c=40,w=c*5+12,h=c*2+12;let s=`<rect x="${ox+2}" y="2" width="${w-4}" height="${h-4}" rx="8" fill="#fff" stroke="${INK}" stroke-width="3"/>`;
  for(let i=0;i<10;i++){const x=ox+6+(i%5)*c,y=6+Math.floor(i/5)*c,cx=x+c/2,cy=y+c/2,t=cs[i];
   s+=`<rect x="${x}" y="${y}" width="${c}" height="${c}" fill="none" stroke="${INK}" stroke-width="1.5"/>`;
-  if(t==='ball')s+=ballAt(cx,cy,30);else if(t==='r')s+=`<circle cx="${cx}" cy="${cy}" r="14" fill="${OR}" stroke="${INK}" stroke-width="1.5"/>`;else if(t==='b')s+=`<circle cx="${cx}" cy="${cy}" r="14" fill="${BL}" stroke="${INK}" stroke-width="1.5"/>`;else if(t==='q')s+=`<circle cx="${cx}" cy="${cy}" r="13" fill="#fff9db" stroke="#e0a800" stroke-width="3" stroke-dasharray="5 4"/>`;
+  if(t==='ball')s+=ballAt(cx,cy,30);else if(t==='x')s+=ballAt(cx,cy,30)+`<path d="M${cx-12} ${cy-12}L${cx+12} ${cy+12}M${cx+12} ${cy-12}L${cx-12} ${cy+12}" stroke="#e03131" stroke-width="4" stroke-linecap="round"/>`;else if(t==='r')s+=`<circle cx="${cx}" cy="${cy}" r="14" fill="${OR}" stroke="${INK}" stroke-width="1.5"/>`;else if(t==='b')s+=`<circle cx="${cx}" cy="${cy}" r="14" fill="${BL}" stroke="${INK}" stroke-width="1.5"/>`;else if(t==='q')s+=`<circle cx="${cx}" cy="${cy}" r="13" fill="#fff9db" stroke="#e0a800" stroke-width="3" stroke-dasharray="5 4"/>`;
   if(labels&&labels[i]!=null)s+=`<text x="${x+7}" y="${y+14}" font-family="Lilita One,sans-serif" font-size="13" fill="${INK}" stroke="#fff" stroke-width="3" paint-order="stroke">${labels[i]}</text>`;}
  return {s,w,h};}
 function frameSVG(cs,labels){const f=frameInner(cs,labels,0);return S(f.w,f.h,f.s);}
@@ -676,9 +688,9 @@ function trackSVG(from,to,st,an){const n=to-from+1,cw=38,w=n*cw+8;let s='';
  const x1=4+(st-from)*cw+cw/2,x2=4+(an-from)*cw+cw/2,dir=x2>x1?1:-1;
  s+=`<path d="M${x1} 42 Q${(x1+x2)/2} 6 ${x2} 42" fill="none" stroke="${INK}" stroke-width="3"/><path d="M${x2} 44 l${-dir*9} -6 l${dir*2} 10z" fill="${INK}"/>`;
  return S(w,92,s);}
-function lineSVG(start,jumps){const pts=[start];jumps.forEach(j=>pts.push(pts[pts.length-1]+j));const lo=pts[0],hi=pts[pts.length-1];const X=v=>50+(v-lo)/((hi-lo)||1)*460;let s=`<line x1="20" y1="110" x2="540" y2="110" stroke="${INK}" stroke-width="3"/><path d="M540 110 l-10 -6 v12z" fill="${INK}"/>`;
+function lineSVG(start,jumps){jumps=jumps.filter(j=>j);const pts=[start];jumps.forEach(j=>pts.push(pts[pts.length-1]+j));const lo=Math.min(...pts),hi=Math.max(...pts);const X=v=>50+(v-lo)/((hi-lo)||1)*460;let s=`<line x1="20" y1="110" x2="540" y2="110" stroke="${INK}" stroke-width="3"/><path d="M540 110 l-10 -6 v12z" fill="${INK}"/>`;
  pts.forEach((v,i)=>{const last=i===pts.length-1;s+=`<line x1="${X(v)}" y1="102" x2="${X(v)}" y2="118" stroke="${INK}" stroke-width="3"/><text x="${X(v)}" y="140" text-anchor="middle" font-family="Lilita One,sans-serif" font-size="20" fill="${last?'#2b8a3e':INK}">${v}</text>`;});
- for(let i=0;i<jumps.length;i++){const a=X(pts[i]),b=X(pts[i+1]),h=Math.min(70,26+(b-a)*.3),m=(a+b)/2;s+=`<path d="M${a} 100 Q${m} ${100-h*2} ${b} 100" fill="none" stroke="${OR}" stroke-width="3"/><path d="M${b} 101 l-9 -5 l3 9z" fill="${OR}"/><text x="${m}" y="${100-h-6}" text-anchor="middle" font-family="Lilita One,sans-serif" font-size="18" fill="${INK}">+${jumps[i]}</text>`;}
+ for(let i=0;i<jumps.length;i++){const a=X(pts[i]),b=X(pts[i+1]),h=Math.min(70,26+Math.abs(b-a)*.3),m=(a+b)/2,dir=b>a?1:-1;s+=`<path d="M${a} 100 Q${m} ${100-h*2} ${b} 100" fill="none" stroke="${OR}" stroke-width="3"/><path d="M${b} 101 l${-dir*9} -5 l${dir*3} 9z" fill="${OR}"/><text x="${m}" y="${100-h-6}" text-anchor="middle" font-family="Lilita One,sans-serif" font-size="18" fill="${INK}">${jumps[i]>0?'+':'−'}${Math.abs(jumps[i])}</text>`;}
  return S(560,150,s);}
 function blocksInner(n,col,ox,oy){const t=Math.floor(n/10),o=n%10;let s='';
  for(let k=0;k<t;k++){const x=ox+k*18;s+=`<rect x="${x}" y="${oy}" width="14" height="100" rx="2" fill="${col}" stroke="${INK}" stroke-width="1.5"/>`;for(let j=1;j<10;j++)s+=`<line x1="${x}" y1="${oy+j*10}" x2="${x+14}" y2="${oy+j*10}" stroke="${INK}" stroke-width=".7"/>`;}
@@ -691,65 +703,246 @@ function arraySVG(rows,cols,labels){const c=Math.max(9,Math.min(26,280/cols,220/
   if(labels)s+=`<text x="${cols*c+18}" y="${6+i*c+c/2+Math.max(10,c*.6)*.35}" font-family="Lilita One,sans-serif" font-size="${Math.max(10,c*.62)}" fill="${INK}">${cols*(i+1)}</text>`;}
  return S(w,h,s);}
 
+/* ---- pictures for subtraction, fractions and time ---- */
+const T=(x,y,t,sz,col,anchor)=>`<text x="${x}" y="${y}" text-anchor="${anchor||'middle'}" font-family="Lilita One,sans-serif" font-size="${sz||20}" fill="${col||INK}">${t}</text>`;
+function ballsSVG(n){const per=10,rows=Math.ceil(n/per),cols=Math.min(n,per);let s='';for(let i=0;i<n;i++)s+=ballAt(18+(i%per)*30,18+Math.floor(i/per)*30,26);return S(cols*30+6,rows*30+6,s);}
+function groupsSVG(total,g,hl){const per=total/g,cols=Math.min(per,5),rows=Math.ceil(per/5),bw=cols*22+14,bh=rows*22+14,perRow=Math.min(g,g>4?5:4);let s='';
+ for(let i=0;i<g;i++){const ox=4+(i%perRow)*(bw+10),oy=4+Math.floor(i/perRow)*(bh+10);s+=`<rect x="${ox}" y="${oy}" width="${bw}" height="${bh}" rx="10" fill="${i<hl?'#fff3bf':'#fff'}" stroke="${i<hl?'#e0a800':INK}" stroke-width="3"/>`;for(let j=0;j<per;j++)s+=ballAt(ox+18+(j%5)*22,oy+18+Math.floor(j/5)*22,19);}
+ return S(perRow*(bw+10)+2,Math.ceil(g/perRow)*(bh+10)+2,s);}
+function fracShapeSVG(d,k,kind){let s='';
+ if(kind==='pie'){const cx=90,cy=90,R=80;for(let i=0;i<d;i++){const a0=i/d*2*Math.PI-Math.PI/2,a1=(i+1)/d*2*Math.PI-Math.PI/2;
+   s+=`<path d="M${cx} ${cy} L${(cx+R*Math.cos(a0)).toFixed(1)} ${(cy+R*Math.sin(a0)).toFixed(1)} A${R} ${R} 0 0 1 ${(cx+R*Math.cos(a1)).toFixed(1)} ${(cy+R*Math.sin(a1)).toFixed(1)}Z" fill="${i<k?OR:'#fff'}" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;}
+  return S(180,180,s);}
+ const w=Math.min(64,320/d);for(let i=0;i<d;i++)s+=`<rect x="${4+i*w}" y="4" width="${w}" height="80" fill="${i<k?OR:'#fff'}" stroke="${INK}" stroke-width="3"/>`;return S(d*w+8,88,s);}
+function barSVG(total,d,k){const W=440,pw=W/d;let s=T(10+W/2,22,total,22)+`<path d="M10 36 v-6 h${W} v6" fill="none" stroke="${INK}" stroke-width="2"/>`;
+ for(let i=0;i<d;i++)s+=`<rect x="${(10+i*pw).toFixed(1)}" y="42" width="${pw.toFixed(1)}" height="52" fill="${i<k?OR:'#fff'}" stroke="${INK}" stroke-width="3"/>`+T((10+i*pw+pw/2).toFixed(1),76,total/d,d>8?16:20);
+ return S(W+20,100,s);}
+function fracLabel(x,y,n,d){return T(x,y,n,20)+`<line x1="${x-14}" y1="${y+6}" x2="${x+14}" y2="${y+6}" stroke="${INK}" stroke-width="2.5"/>`+T(x,y+28,d,20);}
+function fbarsSVG(fr,cols){const W=340;let s='';fr.forEach(([n,d],r)=>{const y=6+r*62,pw=W/d,cs=(cols&&cols[r])||OR;s+=fracLabel(28,y+22,n,d);for(let i=0;i<d;i++)s+=`<rect x="${(60+i*pw).toFixed(1)}" y="${y}" width="${pw.toFixed(1)}" height="50" fill="${i<n?cs:'#fff'}" stroke="${INK}" stroke-width="2.5"/>`;});return S(W+66,fr.length*62+6,s);}
+function fracAddSVG(d,a,b){const W=360,pw=W/d;let s='';for(let i=0;i<d;i++)s+=`<rect x="${(4+i*pw).toFixed(1)}" y="4" width="${pw.toFixed(1)}" height="56" fill="${i<a?OR:i<a+b?BL:'#fff'}" stroke="${INK}" stroke-width="2.5"/>`;return S(W+8,64,s);}
+const ROMAN=['XII','I','II','III','IV','V','VI','VII','VIII','IX','X','XI'];
+function clockSVG(h,m,roman){const cx=110,cy=110,R=100;let s=`<circle cx="${cx}" cy="${cy}" r="${R}" fill="#fff" stroke="${INK}" stroke-width="5"/>`;
+ for(let i=0;i<60;i++){const a=i*Math.PI/30,big=i%5===0,r1=big?R-14:R-8;s+=`<line x1="${(cx+Math.sin(a)*r1).toFixed(1)}" y1="${(cy-Math.cos(a)*r1).toFixed(1)}" x2="${(cx+Math.sin(a)*(R-4)).toFixed(1)}" y2="${(cy-Math.cos(a)*(R-4)).toFixed(1)}" stroke="${INK}" stroke-width="${big?3:1.2}"/>`;}
+ for(let i=0;i<12;i++){const a=i*Math.PI/6,r=R-31;s+=T((cx+Math.sin(a)*r).toFixed(1),(cy-Math.cos(a)*r+(roman?6:8)).toFixed(1),roman?ROMAN[i]:(i||12),roman?15:22);}
+ const ha=((h%12)+m/60)*Math.PI/6,ma=m*Math.PI/30;
+ s+=`<line x1="${cx}" y1="${cy}" x2="${(cx+Math.sin(ha)*50).toFixed(1)}" y2="${(cy-Math.cos(ha)*50).toFixed(1)}" stroke="${OR}" stroke-width="10" stroke-linecap="round"/>`;
+ s+=`<line x1="${cx}" y1="${cy}" x2="${(cx+Math.sin(ma)*80).toFixed(1)}" y2="${(cy-Math.cos(ma)*80).toFixed(1)}" stroke="${BL}" stroke-width="6" stroke-linecap="round"/><circle cx="${cx}" cy="${cy}" r="7" fill="${INK}"/>`;
+ return S(220,220,s);}
+function digitalSVG(t){return S(200,80,`<rect x="3" y="3" width="194" height="74" rx="12" fill="#0f2619" stroke="${INK}" stroke-width="3"/>`+T(100,56,t,40,'#ffcf3f'));}
+function timeLineSVG(labels,jumps){const n=labels.length,X=i=>40+i*(480/(n-1));let s=`<line x1="20" y1="100" x2="540" y2="100" stroke="${INK}" stroke-width="3"/>`;
+ labels.forEach((l,i)=>{s+=`<line x1="${X(i)}" y1="92" x2="${X(i)}" y2="108" stroke="${INK}" stroke-width="3"/>`+T(X(i),132,l,20,i===n-1?'#2b8a3e':INK);});
+ jumps.forEach((j,i)=>{const a=X(i),b=X(i+1),m=(a+b)/2;s+=`<path d="M${a} 90 Q${m} 20 ${b} 90" fill="none" stroke="${OR}" stroke-width="3"/><path d="M${b} 91 l-9 -5 l3 9z" fill="${OR}"/>`+T(m,48,j,18);});
+ return S(560,142,s);}
+function columnSVG(a,b){const A=String(a).padStart(3,' '),B=String(b).padStart(3,' '),sum=String(a+b).padStart(3,' ');const xs=[70,110,150];let carry=[0,0,0],c=0;
+ for(let i=2;i>=0;i--){const v=(+A[i]||0)+(+B[i]||0)+c;c=v>=10?1:0;if(i>0&&c)carry[i-1]=1;}
+ let s=['H','T','O'].map((h,i)=>T(xs[i],22,h,16,'#4f6b5a')).join('');
+ s+=[...A].map((d,i)=>T(xs[i],62,d.trim(),30)).join('');
+ s+=T(30,102,'+',30)+[...B].map((d,i)=>T(xs[i],102,d.trim(),30)).join('');
+ s+=`<line x1="40" y1="114" x2="174" y2="114" stroke="${INK}" stroke-width="3"/>`;
+ s+=[...sum].map((d,i)=>T(xs[i],150,d.trim(),30,'#2b8a3e')).join('');
+ s+=carry.map((k,i)=>k?T(xs[i]+12,170,'1',16,'#e8590c'):'').join('');
+ s+=`<line x1="40" y1="156" x2="174" y2="156" stroke="${INK}" stroke-width="3"/>`;
+ return S(190,178,s);}
+function gridSVG(t,o,m){const box=(x,y,w,h,txt,fill)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${fill||'#fff'}" stroke="${INK}" stroke-width="3"/>`+T(x+w/2,y+h/2+9,txt,24);
+ return S(330,124,box(4,4,70,54,'×','#f3f0e2')+box(74,4,140,54,t,'#ffd8a8')+box(214,4,110,54,o,'#a5d8ff')+box(4,58,70,60,m,'#fff3bf')+box(74,58,140,60,t*m)+box(214,58,110,60,o*m));}
+
 /* ---------------- maths levels ---------------- */
 function makeOpts(ans,cands){const out=[];for(const c of shuffle(cands)){if(Number.isInteger(c)&&c>=0&&c!==ans&&!out.includes(c))out.push(c);if(out.length===2)break;}let k=1;while(out.length<2){for(const c of [ans+k,ans-k])if(c>=0&&c!==ans&&!out.includes(c)&&out.length<2)out.push(c);k++;}return [ans,...out].sort((a,b)=>a-b);}
 const Q=o=>Object.assign(o,{opts:makeOpts(o.ans,o.cands)});
+/* a question whose answers are words or fractions: always picked from 3 buttons */
+function C3(o,wrong,fixedOrder){const opts=[o.ans];for(const w of wrong){if(w!==o.ans&&!opts.includes(w)&&opts.length<3)opts.push(w);}
+ return Object.assign(o,{choice:true,opts:fixedOrder||shuffle(opts)});}
+const DEN={2:['half','halves'],3:['third','thirds'],4:['quarter','quarters'],5:['fifth','fifths'],6:['sixth','sixths'],7:['seventh','sevenths'],8:['eighth','eighths'],9:['ninth','ninths'],10:['tenth','tenths'],12:['twelfth','twelfths']};
+const fw=(n,d)=>DEN[d]?`${n===1?'one':n} ${n===1?DEN[d][0]:DEN[d][1]}`:`${n} over ${d}`;
+const fs=(n,d)=>`${n}/${d}`;
+const pad2=m=>String(m).padStart(2,'0');
+const hr12=h=>((h-1+120)%12)+1;
+const dig=(h,m)=>`${h}:${pad2(m)}`;
+function timeWords(h,m){if(m===0)return `${h} o'clock`;if(m===30)return `half past ${h}`;if(m===15)return `quarter past ${h}`;if(m===45)return `quarter to ${hr12(h+1)}`;if(m<30)return `${m} past ${h}`;return `${60-m} to ${hr12(h+1)}`;}
 function sumQ(a,b){const s=a+b;return Q({text:`${a} + ${b} = ?`,speak:`What is ${a} add ${b}?`,ans:s,cands:[s-1,s+1,s+2],vis:frameSVG(cells(a,b)),exp:{vis:[frameSVG(cells(a,b)),pwSVG(s,a,b,null)],steps:[`${a} is one part.`,`${b} is the other part.`,'Put the parts together to make the whole.',`${a} and ${b} make ${s}.`]}});}
 function expTimes(m,t,sw){const ans=m*t,steps=[];if(sw)steps.push(`${t} × ${m} is the same as ${m} × ${t}.`);steps.push(`${m} × ${t} means ${m} ${m===1?'group':'groups'} of ${t}.`);
  if((t===4||t===8)&&m>=3){steps.push(t===4?'To times by 4, double and double again.':'To times by 8, double, double and double again.');let v=m;for(let i=0;i<(t===4?2:3);i++){steps.push(`Double ${v} is ${v*2}.`);v*=2;}}
  else if(t===9&&m>=3){steps.push(`${m} × 10 = ${m*10}.`,`Take 1 away from each group: ${m*10} − ${m} = ${ans}.`);}
+ else if(t===11&&m<=9){steps.push(`${m} × 10 = ${m*10}, then add one more ${m}: ${m*10} + ${m} = ${ans}.`);}
  else if(m<=6||t===2||t===5||t===10){steps.push(`Count in ${t}s: ${Array.from({length:m},(_,i)=>(i+1)*t).join(', ')}.`);}
  else if(m<=9){steps.push(`5 × ${t} = ${5*t}.`,`${m-5} more ${m-5===1?'group':'groups'}: ${m-5} × ${t} = ${(m-5)*t}.`,`${5*t} + ${(m-5)*t} = ${ans}.`);}
  else{steps.push(`10 × ${t} = ${10*t}.`);if(m>10)steps.push(`${m-10} more ${m-10===1?'group':'groups'}: ${m-10} × ${t} = ${(m-10)*t}.`,`${10*t} + ${(m-10)*t} = ${ans}.`);}
  steps.push(`So ${m} × ${t} = ${ans}.`);return {vis:[arraySVG(m,t,true)],steps};}
 function timesQ(t,m,vis){const sw=Math.random()<.35,x=sw?t:m,y=sw?m:t,ans=m*t;return Q({text:`${x} × ${y} = ?`,speak:`What is ${x} times ${y}?`,ans,cands:[ans+t,ans-t,(t+1)*m,(t-1)*m,ans+1,ans-1,ans+10,ans-10],vis:vis?arraySVG(m,t,false):'',exp:expTimes(m,t,sw)});}
-function partQ(a,b,vis){const aT=a-a%10,bT=b-b%10,aO=a%10,bO=b%10,T=aT+bT,O=aO+bO,s=a+b;const steps=['Split both numbers into tens and ones.',`Tens: ${aT} + ${bT} = ${T}.`];
- steps.push(O>=10?`Ones: ${aO} + ${bO} = ${O}. That is 1 ten and ${O-10} ones.`:`Ones: ${aO} + ${bO} = ${O}.`);steps.push(`${T} + ${O} = ${s}.`);
+const tablesQ=ts=>{const t=pick(ts),m=rnd(1,12);return timesQ(t,m,false);};
+function partQ(a,b,vis){const aT=a-a%10,bT=b-b%10,aO=a%10,bO=b%10,T2=aT+bT,O=aO+bO,s=a+b;const steps=['Split both numbers into tens and ones.',`Tens: ${aT} + ${bT} = ${T2}.`];
+ steps.push(O>=10?`Ones: ${aO} + ${bO} = ${O}. That is 1 ten and ${O-10} ones.`:`Ones: ${aO} + ${bO} = ${O}.`);steps.push(`${T2} + ${O} = ${s}.`);
  return Q({text:`${a} + ${b} = ?`,speak:`What is ${a} add ${b}?`,ans:s,cands:[s-10,s+10,s-1,s+1,s+2],vis:vis?blocksPair(a,b):'',exp:{vis:[blocksPair(a,b)],steps}});}
+function factQ(list){const [text,ans,steps]=pick(list);return Q({text,speak:'How many '+text[0].toLowerCase()+text.slice(1),ans,cands:[ans+1,ans-1,ans+10,ans-10,ans*2,Math.round(ans/2)],vis:'',exp:{vis:[],steps}});}
+function shapeQ(d,k,wrongPool){const kind=pick(['pie','bar']),ans=fs(k,d);return C3({text:'What fraction is shaded?',speak:'What fraction of the shape is shaded?',ans,vis:fracShapeSVG(d,k,kind),
+ exp:{vis:[fracShapeSVG(d,k,kind)],steps:[`The whole is split into ${d} equal parts.`,`${k} ${k===1?'part is':'parts are'} shaded.`,`So the shaded part is ${ans}: ${fw(k,d)}.`].concat(k*2===d&&d>2?[`${ans} is the same as 1/2.`]:[])}},shuffle(wrongPool));}
+function fracOfQ(n,d,t,vis){const per=t/d,ans=per*n;const steps=n===1?[`Share ${t} into ${d} equal parts.`,`${t} ÷ ${d} = ${per}. Each part is ${per}.`,`So ${fs(1,d)} of ${t} is ${per}.`]
+ :[`Find one part first: ${t} ÷ ${d} = ${per}.`,`We want ${n} parts: ${per} × ${n} = ${ans}.`,`So ${fs(n,d)} of ${t} is ${ans}.`];
+ return Q({text:`${fs(n,d)} of ${t} = ?`,speak:`What is ${fw(n,d)} of ${t}?`,ans,cands:n===1?[per+1,per-1,t-per,per*2,d]:[per,ans+per,ans-per,t-ans,ans+1],vis:vis?ballsSVG(t):'',
+  exp:{vis:t<=24&&n===1&&d<=4?[groupsSVG(t,d,1),barSVG(t,d,n)]:[barSVG(t,d,n)],steps}});}
+function clockQ(h,m,roman,ans,wrong,steps){return C3({text:'What time is it?',speak:'What time does the clock show?',ans,vis:clockSVG(h,m,roman),exp:{vis:[clockSVG(h,m,roman)],steps}},shuffle(wrong));}
 const TABLE_POOL=[2,3,4,5,6,6,7,7,8,8,9,9,11,12,12];
+
 const LEVELS=[
- {name:'Counting to 5',year:'Reception',gen(){const n=rnd(1,5);return Q({text:'How many?',speak:'How many footballs can you see?',ans:n,cands:[n-1,n+1,n+2],vis:dice(n),exp:{vis:[countRow(n)],steps:["Let's count them together.",seq(1,n)+'.',`The last number we say is how many. There are ${n}.`]}});}},
- {name:'Counting to 10',year:'Reception',gen(){const n=rnd(3,10),cs=Array(10).fill('').map((_,i)=>i<n?'ball':''),lb=cs.map((c,i)=>c?i+1:null);return Q({text:'How many?',speak:'How many footballs can you see?',ans:n,cands:[n-1,n+1,n-2,n+2],vis:frameSVG(cs),exp:{vis:[frameSVG(cs,lb)],steps:n>5?['The top row is full. That is 5.',`Count on from 5: ${seq(6,n)}.`,`There are ${n}.`]:["Let's count them.",seq(1,n)+'.',`There are ${n}.`]}});}},
- {name:'One more, one less',year:'Reception',gen(){const more=Math.random()<.6,n=more?rnd(1,9):rnd(2,10),ans=more?n+1:n-1,cs=Array(10).fill('').map((_,i)=>i<n?'ball':'');return Q({text:more?`1 more than ${n}?`:`1 less than ${n}?`,speak:more?`What is one more than ${n}?`:`What is one less than ${n}?`,ans,cands:[n,ans+1,ans-1],vis:frameSVG(cs),exp:{vis:[trackSVG(1,10,n,ans)],steps:more?['One more is the next number when we count.',`After ${n} comes ${ans}.`]:['One less is the number just before.',`Before ${n} comes ${ans}.`]}});}},
- {name:'Adding to 5',year:'Reception',gen(){const a=rnd(1,4);return sumQ(a,rnd(1,5-a));}},
- {name:'Number bonds to 10',year:'Reception',gen(){const r=Math.random();
+ /* ---------- Reception ---------- */
+ {id:'count5',name:'Counting to 5',year:'Reception',yr:0,gen(){const n=rnd(1,5);return Q({text:'How many?',speak:'How many footballs can you see?',ans:n,cands:[n-1,n+1,n+2],vis:dice(n),exp:{vis:[countRow(n)],steps:["Let's count them together.",seq(1,n)+'.',`The last number we say is how many. There are ${n}.`]}});}},
+ {id:'count10',name:'Counting to 10',year:'Reception',yr:0,gen(){const n=rnd(3,10),cs=Array(10).fill('').map((_,i)=>i<n?'ball':''),lb=cs.map((c,i)=>c?i+1:null);return Q({text:'How many?',speak:'How many footballs can you see?',ans:n,cands:[n-1,n+1,n-2,n+2],vis:frameSVG(cs),exp:{vis:[frameSVG(cs,lb)],steps:n>5?['The top row is full. That is 5.',`Count on from 5: ${seq(6,n)}.`,`There are ${n}.`]:["Let's count them.",seq(1,n)+'.',`There are ${n}.`]}});}},
+ {id:'moreless',name:'One more, one less',year:'Reception',yr:0,gen(){const more=Math.random()<.6,n=more?rnd(1,9):rnd(2,10),ans=more?n+1:n-1,cs=Array(10).fill('').map((_,i)=>i<n?'ball':'');return Q({text:more?`1 more than ${n}?`:`1 less than ${n}?`,speak:more?`What is one more than ${n}?`:`What is one less than ${n}?`,ans,cands:[n,ans+1,ans-1],vis:frameSVG(cs),exp:{vis:[trackSVG(1,10,n,ans)],steps:more?['One more is the next number when we count.',`After ${n} comes ${ans}.`]:['One less is the number just before.',`Before ${n} comes ${ans}.`]}});}},
+ {id:'add5',name:'Adding to 5',year:'Reception',yr:0,gen(){const a=rnd(1,4);return sumQ(a,rnd(1,5-a));}},
+ {id:'take5',name:'Taking away within 5',year:'Reception',yr:0,gen(){const a=rnd(2,5),b=rnd(1,a-1),ans=a-b,start=Array(10).fill('').map((_,i)=>i<a?'ball':''),cs=Array(10).fill('').map((_,i)=>i<ans?'ball':i<a?'x':'');
+   return Q({text:`${a} − ${b} = ?`,speak:`What is ${a} take away ${b}?`,ans,cands:[ans+1,ans-1,a,a+b],vis:frameSVG(start),exp:{vis:[frameSVG(cs)],steps:[`Start with ${a}.`,`Take away ${b}. Cross ${b===1?'it':'them'} out.`,`Count what is left: ${seq(1,ans)}.`,`${a} take away ${b} is ${ans}.`]}});}},
+ {id:'bonds10',name:'Number bonds to 10',year:'Reception',yr:0,gen(){const r=Math.random();
    if(r<.35){const a=rnd(1,9),ans=10-a;return Q({text:`${a} + ? = 10`,speak:`${a} add what makes 10?`,ans,cands:[ans-1,ans+1,a],vis:frameSVG(cells(a,0,ans)),exp:{vis:[frameSVG(cells(a,0,ans)),pwSVG(10,a,ans,null)],steps:[`10 is the whole. ${a} is one part.`,`Count the empty spaces. There are ${ans}.`,`${a} and ${ans} make 10.`]}});}
    if(r<.55){const a=rnd(1,5);return Q({text:`${a} + ${a} = ?`,speak:`What is double ${a}? ${a} add ${a}.`,ans:2*a,cands:[2*a-1,2*a+1,a+1],vis:frameSVG(cells(a,a)),exp:{vis:[frameSVG(cells(a,a))],steps:[`Double ${a} means ${a} and ${a} again.`,`${a} + ${a} = ${2*a}.`]}});}
    const a=rnd(2,8);return sumQ(a,rnd(1,10-a));}},
- {name:'Adding to 20',year:'Year 1',gen(){
+ {id:'share',name:'Sharing and doubling',year:'Reception',yr:0,gen(){
+   if(Math.random()<.55){const g=pick([2,2,3]),per=rnd(1,g===2?5:3),t=per*g;return Q({text:`Share ${t} between ${g}`,speak:`Share ${t} footballs between ${g} players. How many does each player get?`,ans:per,cands:[per+1,per-1,t,g],vis:ballsSVG(t),exp:{vis:[groupsSVG(t,g,0)],steps:[`Give the players one football each, then another, until they are all gone.`,`Each player gets ${per}.`,`${t} shared between ${g} is ${per} each.`]}});}
+   const a=rnd(1,5);return Q({text:`Double ${a} = ?`,speak:`What is double ${a}?`,ans:2*a,cands:[2*a-1,2*a+1,a+1,a],vis:frameSVG(cells(a,0)),exp:{vis:[frameSVG(cells(a,a))],steps:[`Double means the same again.`,`${a} and ${a} more makes ${2*a}.`]}});}},
+ /* ---------- Year 1 ---------- */
+ {id:'add20',name:'Adding to 20',year:'Year 1',yr:1,gen(){
    if(Math.random()<.7){const a=rnd(6,9),b=rnd(11-a,9),s=a+b,need=10-a,rest=b-need;return Q({text:`${a} + ${b} = ?`,speak:`What is ${a} add ${b}?`,ans:s,cands:[s-1,s+1,s-10,s+10,s-2],vis:twoFrames(a,b),exp:{vis:[twoFrames(a,b),pwSVG(b,need,rest,null)],steps:[`Make 10 first. ${a} needs ${need} more to make 10.`,`Split ${b} into ${need} and ${rest}.`,`${a} + ${need} = 10.`,`10 + ${rest} = ${s}.`]}});}
    const a=rnd(11,15),o=a-10,b=rnd(1,9-o),s=a+b;return Q({text:`${a} + ${b} = ?`,speak:`What is ${a} add ${b}?`,ans:s,cands:[s-1,s+1,s-10,s+2],vis:twoFrames(a,b),exp:{vis:[twoFrames(a,b)],steps:[`${a} is 10 and ${o}.`,`${o} + ${b} = ${o+b}.`,`10 and ${o+b} make ${s}.`]}});}},
- {name:'2, 5 and 10 times tables',year:'Year 2',gen(){const t=pick([2,5,10]),m=rnd(1,12);return timesQ(t,m,m*t<=60);}},
- {name:'Adding ones to 2-digit numbers',year:'Year 2',gen(){
+ {id:'sub20',name:'Taking away within 20',year:'Year 1',yr:1,gen(){const r=Math.random();
+   if(r<.55){const a=rnd(11,18),o=a-10,b=rnd(o+1,9),ans=a-b,rest=b-o;return Q({text:`${a} − ${b} = ?`,speak:`What is ${a} take away ${b}?`,ans,cands:[ans+1,ans-1,ans+10,a+b-10,b-o],vis:twoFrames(a,0),exp:{vis:[lineSVG(a,[-o,-rest])],steps:[`Take away ${o} first to get back to 10: ${a} − ${o} = 10.`,`Then take away the other ${rest}: 10 − ${rest} = ${ans}.`,`So ${a} − ${b} = ${ans}.`]}});}
+   if(r<.8){const a=rnd(12,19),o=a-10,b=rnd(1,o),ans=a-b;return Q({text:`${a} − ${b} = ?`,speak:`What is ${a} take away ${b}?`,ans,cands:[ans+1,ans-1,ans-10,ans+10],vis:twoFrames(a,0),exp:{vis:[twoFrames(a,0)],steps:[`${a} is 10 and ${o}.`,`Take away from the ones: ${o} − ${b} = ${o-b}.`,`10 and ${o-b} make ${ans}.`]}});}
+   const a=rnd(5,10),b=rnd(1,a-1),ans=a-b;return Q({text:`${a} − ${b} = ?`,speak:`What is ${a} take away ${b}?`,ans,cands:[ans+1,ans-1,a+b],vis:frameSVG(Array(10).fill('').map((_,i)=>i<a?'ball':'')),exp:{vis:[frameSVG(Array(10).fill('').map((_,i)=>i<ans?'ball':i<a?'x':''))],steps:[`Start with ${a}.`,`Take away ${b}.`,`${ans} are left. ${a} − ${b} = ${ans}.`]}});}},
+ {id:'steps',name:'Counting in 2s, 5s and 10s',year:'Year 1',yr:1,gen(){const st=pick([2,5,10]),back=Math.random()<.25,k0=rnd(back?4:0,back?10:7),terms=[0,1,2,3].map(i=>(back?k0-i:k0+i)*st),ans=(back?k0-4:k0+4)*st;
+   return Q({text:`${terms.join(', ')}, ?`,speak:`What comes next? ${terms.join(', ')}`,ans,cands:[ans+(back?-1:1)*st,ans+1,ans-1,terms[3]],vis:'',exp:{vis:[lineSVG(terms[0],[1,2,3,4].map(()=>back?-st:st))],steps:[`We are counting ${back?'back':'on'} in ${st}s.`,`${terms[3]} ${back?'−':'+'} ${st} = ${ans}.`,`So the next number is ${ans}.`]}});}},
+ {id:'half',name:'Halves',year:'Year 1',yr:1,gen(){
+   if(Math.random()<.65){const per=rnd(1,10),t=per*2;return fracOfQ(1,2,t,true);}
+   return pick([0,1])?shapeQ(2,1,['1/4','1/3']):shapeQ(4,1,['1/2','1/3']);}},
+ {id:'quarter',name:'Quarters',year:'Year 1',yr:1,gen(){
+   if(Math.random()<.6){const per=rnd(1,5),t=per*4;return fracOfQ(1,4,t,true);}
+   return pick([0,1,1])?shapeQ(4,1,['1/2','1/3']):shapeQ(2,1,['1/4','1/3']);}},
+ {id:'clock1',name:"O'clock and half past",year:'Year 1',yr:1,choice:true,gen(){const h=rnd(1,12),half=Math.random()<.5;
+   if(half)return clockQ(h,30,false,timeWords(h,30),[`half past ${hr12(h+1)}`,`${h} o'clock`,`6 o'clock`],['The long blue hand points to 6. It has gone half way round the clock.','Half way round means half past.',`The short orange hand has just gone past ${h}.`,`So it is half past ${h}.`]);
+   return clockQ(h,0,false,timeWords(h,0),[h===12?`6 o'clock`:`12 o'clock`,`half past ${h}`,`${hr12(h+1)} o'clock`],["The long blue hand points to 12. That means o'clock.",`The short orange hand points to ${h}.`,`So it is ${h} o'clock.`]);}},
+ /* ---------- Year 2 ---------- */
+ {id:'x2510',name:'2, 5 and 10 times tables',year:'Year 2',yr:2,gen(){const t=pick([2,5,10]),m=rnd(1,12);return timesQ(t,m,m*t<=60);}},
+ {id:'add2d1',name:'Adding ones to 2-digit numbers',year:'Year 2',yr:2,gen(){
    if(Math.random()<.5){const o=rnd(3,9),a=rnd(1,8)*10+o,b=rnd(11-o,9),s=a+b,to=10-o,rest=b-to;return Q({text:`${a} + ${b} = ?`,speak:`What is ${a} add ${b}?`,ans:s,cands:[s-10,s+10,s-1,s+1],vis:blocksPair(a,b),exp:{vis:[lineSVG(a,[to,rest])],steps:[`Start at ${a}.`,`Jump ${to} to the next ten: ${a+to}.`,`Jump the other ${rest}: ${s}.`]}});}
    const o=rnd(0,7),a=rnd(1,8)*10+o,b=rnd(1,9-o),s=a+b,t=a-o;return Q({text:`${a} + ${b} = ?`,speak:`What is ${a} add ${b}?`,ans:s,cands:[s-10,s+10,s-1,s+1],vis:blocksPair(a,b),exp:{vis:[blocksPair(a,b)],steps:[`${a} is ${t} and ${o}.`,`Add the ones: ${o} + ${b} = ${o+b}.`,`${t} and ${o+b} make ${s}.`]}});}},
- {name:'Adding tens',year:'Year 2',gen(){const a=rnd(11,69),k=rnd(1,Math.min(4,Math.floor((99-a)/10))),b=10*k,s=a+b,js=Array(k).fill(10),st=[];for(let i=1;i<=k;i++)st.push(a+10*i);return Q({text:`${a} + ${b} = ?`,speak:`What is ${a} add ${b}?`,ans:s,cands:[s-1,s+1,s-10,s+10,a+k],vis:blocksPair(a,b),exp:{vis:[lineSVG(a,js)],steps:['When we add tens, the ones stay the same.',`Count on in tens from ${a}: ${st.join(', ')}.`,`${a} + ${b} = ${s}.`]}});}},
- {name:'Adding 2-digit numbers',year:'Year 2',gen(){const aT=rnd(1,6),aO=rnd(1,8),bT=rnd(1,8-aT),bO=rnd(0,9-aO);return partQ(aT*10+aO,bT*10+bO,true);}},
- {name:'Adding 2-digit numbers past 10',year:'Year 2–3',gen(){const aO=rnd(2,9),bO=rnd(10-aO,9),aT=rnd(1,6),bT=rnd(1,8-aT);return partQ(aT*10+aO,bT*10+bO,false);}},
- {name:'3, 4 and 8 times tables',year:'Year 3',gen(){return timesQ(pick([3,4,8]),rnd(2,12),false);}},
- {name:'All times tables to 12 × 12',year:'Year 4',gen(){return timesQ(pick(TABLE_POOL),rnd(2,12),false);}},
- {name:'Champion mix',year:'Year 4 +',gen(){if(Math.random()<.5)return timesQ(pick(TABLE_POOL),rnd(2,12),false);return partQ(rnd(2,8)*10+rnd(1,9),rnd(1,6)*10+rnd(1,9),false);}}
+ {id:'tens',name:'Adding and taking away tens',year:'Year 2',yr:2,gen(){
+   if(Math.random()<.4){const a=rnd(31,99),k=rnd(1,Math.min(4,Math.floor((a-1)/10))),b=10*k,ans=a-b,st=[];for(let i=1;i<=k;i++)st.push(a-10*i);return Q({text:`${a} − ${b} = ?`,speak:`What is ${a} take away ${b}?`,ans,cands:[ans+1,ans-1,ans+10,ans-10,a-k],vis:'',exp:{vis:[lineSVG(a,Array(k).fill(-10))],steps:['When we take away tens, the ones stay the same.',`Count back in tens from ${a}: ${st.join(', ')}.`,`${a} − ${b} = ${ans}.`]}});}
+   const a=rnd(11,69),k=rnd(1,Math.min(4,Math.floor((99-a)/10))),b=10*k,s=a+b,st=[];for(let i=1;i<=k;i++)st.push(a+10*i);return Q({text:`${a} + ${b} = ?`,speak:`What is ${a} add ${b}?`,ans:s,cands:[s-1,s+1,s-10,s+10,a+k],vis:blocksPair(a,b),exp:{vis:[lineSVG(a,Array(k).fill(10))],steps:['When we add tens, the ones stay the same.',`Count on in tens from ${a}: ${st.join(', ')}.`,`${a} + ${b} = ${s}.`]}});}},
+ {id:'add2d',name:'Adding 2-digit numbers',year:'Year 2',yr:2,gen(){const aT=rnd(1,6),aO=rnd(1,8),bT=rnd(1,8-aT),bO=rnd(0,9-aO);return partQ(aT*10+aO,bT*10+bO,true);}},
+ {id:'sub2d1',name:'Taking away from 2-digit numbers',year:'Year 2',yr:2,gen(){
+   if(Math.random()<.6){const o=rnd(1,8),a=rnd(2,9)*10+o,b=rnd(o+1,9),ans=a-b,rest=b-o;return Q({text:`${a} − ${b} = ?`,speak:`What is ${a} take away ${b}?`,ans,cands:[ans+10,ans-10,ans+1,ans-1,ans+2],vis:'',exp:{vis:[lineSVG(a,[-o,-rest])],steps:[`Start at ${a}.`,`Take away ${o} to get to ${a-o}.`,`Take away the other ${rest}: ${a-o} − ${rest} = ${ans}.`]}});}
+   const o=rnd(2,9),a=rnd(1,9)*10+o,b=rnd(1,o),ans=a-b;return Q({text:`${a} − ${b} = ?`,speak:`What is ${a} take away ${b}?`,ans,cands:[ans+10,ans-10,ans+1,ans-1],vis:'',exp:{vis:[lineSVG(a,[-b])],steps:[`${a} is ${a-o} and ${o}.`,`Take away from the ones: ${o} − ${b} = ${o-b}.`,`${a-o} and ${o-b} make ${ans}.`]}});}},
+ {id:'thirds',name:'Thirds and quarters',year:'Year 2',yr:2,gen(){
+   if(Math.random()<.45){const d=pick([3,4,3]);return shapeQ(d,1,['1/2','1/3','1/4'].filter(x=>x!==fs(1,d)));}
+   const d=pick([3,4,2]),per=rnd(1,d===2?10:5);return fracOfQ(1,d,per*d,per*d<=20);}},
+ {id:'threeq',name:'Three quarters, and 2/4 = 1/2',year:'Year 2',yr:2,gen(){const r=Math.random();
+   if(r<.35){const k=pick([2,3,3]);return shapeQ(4,k,['1/4','2/4','3/4','1/3'].filter(x=>x!==fs(k,4)));}
+   if(r<.55){if(Math.random()<.5)return C3({text:'2/4 = ?',speak:'Two quarters is the same as what?',ans:'1/2',vis:fracShapeSVG(4,2,'bar'),exp:{vis:[fbarsSVG([[2,4],[1,2]])],steps:['2 quarters cover the same amount as 1 half.','So 2/4 = 1/2.']}},['1/4','3/4']);
+     return C3({text:'1/2 = ?',speak:'One half is the same as how many quarters?',ans:'2/4',vis:fracShapeSVG(2,1,'bar'),exp:{vis:[fbarsSVG([[1,2],[2,4]])],steps:['Split each half into 2 equal parts. Now there are 4 quarters.','1 half covers 2 of the quarters.','So 1/2 = 2/4.']}},['1/4','3/4']);}
+   const k=pick([3,3,2]),per=rnd(1,5);return fracOfQ(k,4,per*4,per*4<=20);}},
+ {id:'clock2',name:'Quarter past and quarter to',year:'Year 2',yr:2,choice:true,gen(){const h=rnd(1,12),m=pick([15,45,15,45,30,0]);
+   if(m===15)return clockQ(h,15,false,timeWords(h,15),[`quarter to ${h}`,`quarter past ${hr12(h+1)}`,`3 o'clock`],['The long blue hand points to 3. It has gone a quarter of the way round.','On the right side of the clock we say past.',`The short orange hand has just gone past ${h}.`,`So it is quarter past ${h}.`]);
+   if(m===45)return clockQ(h,45,false,timeWords(h,45),[`quarter past ${hr12(h+1)}`,`quarter to ${h}`,`quarter past ${h}`],['The long blue hand points to 9. There is a quarter of the way left to go to 12.','On the left side of the clock we say to.',`The short orange hand is nearly at ${hr12(h+1)}.`,`So it is quarter to ${hr12(h+1)}.`]);
+   return LEVEL_BY_ID.clock1.gen();}},
+ {id:'clock5',name:'Time to 5 minutes',year:'Year 2',yr:2,choice:true,gen(){
+   if(Math.random()<.22)return factQ([['Minutes in an hour?',60,['The long hand takes 1 hour to go all the way round.','That is 12 jumps of 5 minutes: 12 × 5 = 60.','There are 60 minutes in an hour.']],['Minutes in half an hour?',30,['There are 60 minutes in an hour.','Half of 60 is 30.']],['Minutes in a quarter of an hour?',15,['There are 60 minutes in an hour.','A quarter of 60 is 15.']],['Hours in a day?',24,['The short hand goes round the clock twice in a day.','12 + 12 = 24 hours.']]]);
+   const h=rnd(1,12),m=pick([5,10,20,25,35,40,50,55]),ans=timeWords(h,m),n=m/5;
+   if(m<30)return clockQ(h,m,false,ans,[`${m} to ${h}`,`${m} past ${hr12(h+1)}`,`${n} past ${h}`],[`The long blue hand points to ${n}.`,`Count in 5s from 12: ${Array.from({length:n},(_,i)=>(i+1)*5).join(', ')}. That is ${m} minutes.`,`It is on the right side, so we say past. The short hand has just gone past ${h}.`,`So it is ${ans}.`]);
+   const left=(60-m)/5;return clockQ(h,m,false,ans,[`${60-m} past ${hr12(h+1)}`,`${60-m} to ${h}`,`${m} past ${h}`],[`The long blue hand points to ${n}.`,`It is on the left side, so count on to 12 in 5s: ${Array.from({length:left},(_,i)=>(i+1)*5).join(', ')}. That is ${60-m} minutes to go.`,`The short hand is nearly at ${hr12(h+1)}.`,`So it is ${ans}.`]);}},
+ {id:'add2dx',name:'Adding 2-digit numbers past 10',year:'Year 2',yr:2,gen(){const aO=rnd(2,9),bO=rnd(10-aO,9),aT=rnd(1,6),bT=rnd(1,8-aT);return partQ(aT*10+aO,bT*10+bO,false);}},
+ /* ---------- Year 3 ---------- */
+ {id:'x34',name:'3 and 4 times tables',year:'Year 3',yr:3,gen(){return tablesQ([3,4]);}},
+ {id:'sub2d',name:'Subtracting 2-digit numbers',year:'Year 3',yr:3,gen(){const b=rnd(1,4)*10+rnd(1,9),a=rnd(b+11,99),bT=b-b%10,bO=b%10,mid=a-bT,ans=a-b,err=Math.abs(Math.floor(a/10)-Math.floor(b/10))*10+Math.abs(a%10-bO);
+   return Q({text:`${a} − ${b} = ?`,speak:`What is ${a} take away ${b}?`,ans,cands:[err,ans+10,ans-10,ans+1,ans-1],vis:'',exp:{vis:[lineSVG(a,[-bT,-bO])],steps:[`Split ${b} into ${bT} and ${bO}.`,`Take away the tens: ${a} − ${bT} = ${mid}.`,`Take away the ones: ${mid} − ${bO} = ${ans}.`]}});}},
+ {id:'fracset',name:'Fractions of amounts',year:'Year 3',yr:3,gen(){const d=pick([2,3,4,5,6,8,10]),per=rnd(2,d<=4?10:6);return fracOfQ(1,d,per*d,false);}},
+ {id:'fracnon',name:'Bigger fractions of amounts',year:'Year 3',yr:3,gen(){const d=pick([3,4,5,6,8,10]),k=rnd(2,d-1),per=rnd(2,d<=5?8:5);return fracOfQ(k,d,per*d,false);}},
+ {id:'fraccmp',name:'Comparing fractions',year:'Year 3',yr:3,choice:true,gen(){
+   if(Math.random()<.5){const [d1,d2]=shuffle([2,3,4,5,6,8,10]).slice(0,2),a=fs(1,d1),b=fs(1,d2),ans=d1<d2?a:b,small=fs(1,Math.max(d1,d2));
+     return C3({text:`Bigger: ${a} or ${b}?`,speak:`Which is bigger: ${fw(1,d1)} or ${fw(1,d2)}?`,ans,vis:'',exp:{vis:[fbarsSVG([[1,d1],[1,d2]])],steps:['Both fractions have 1 part.','When the whole is split into more parts, each part is smaller.',`${small} has more parts, so it is smaller.`,`So ${ans} is bigger.`]}},[a,b,'The same'].filter(x=>x!==ans),[a,b,'The same']);}
+   const d=pick([5,6,7,8,9,10]),n1=rnd(1,d-1);let n2=rnd(1,d-1);while(n2===n1)n2=rnd(1,d-1);const a=fs(n1,d),b=fs(n2,d),ans=fs(Math.max(n1,n2),d);
+   return C3({text:`Bigger: ${a} or ${b}?`,speak:`Which is bigger: ${fw(n1,d)} or ${fw(n2,d)}?`,ans,vis:'',exp:{vis:[fbarsSVG([[n1,d],[n2,d]])],steps:['Both fractions have the same size parts.',`${Math.max(n1,n2)} parts is more than ${Math.min(n1,n2)} parts.`,`So ${ans} is bigger.`]}},[a,b,'The same'].filter(x=>x!==ans),[a,b,'The same']);}},
+ {id:'fracadd',name:'Adding and taking away fractions',year:'Year 3',yr:3,choice:true,gen(){const d=pick([4,5,6,7,8,9,10]);
+   if(Math.random()<.65){const a=rnd(1,d-2),b=rnd(1,d-1-a),s=a+b,ans=fs(s,d);return C3({text:`${fs(a,d)} + ${fs(b,d)} = ?`,speak:`What is ${fw(a,d)} add ${fw(b,d)}?`,ans,vis:fracAddSVG(d,a,0),exp:{vis:[fracAddSVG(d,a,b)],steps:['The parts are all the same size, so just add the number of parts.',`${a} + ${b} = ${s}.`,`The bottom number stays the same. So the answer is ${ans}.`]}},shuffle([fs(s,d+d),fs(s+1,d),fs(Math.max(1,s-1),d)]));}
+   const a=rnd(2,d-1),b=rnd(1,a-1),r=a-b,ans=fs(r,d);return C3({text:`${fs(a,d)} − ${fs(b,d)} = ?`,speak:`What is ${fw(a,d)} take away ${fw(b,d)}?`,ans,vis:fracAddSVG(d,a,0),exp:{vis:[fracAddSVG(d,r,0)],steps:['The parts are all the same size, so just take away the number of parts.',`${a} − ${b} = ${r}.`,`The bottom number stays the same. So the answer is ${ans}.`]}},shuffle([fs(r+1,d),fs(a+b<=d?a+b:Math.max(1,r-1),d),fs(r,d+1)]));}},
+ {id:'clockmin',name:'Time to the minute',year:'Year 3',yr:3,choice:true,gen(){const h=rnd(1,12);let m=rnd(1,59);if(m%5===0)m=Math.min(59,m+rnd(1,4));const roman=Math.random()<.4,ans=dig(h,m),five=5*Math.floor(m/5);
+   return clockQ(h,m,roman,ans,[m>=30?dig(hr12(h+1),m):dig(hr12(h-1),m),dig(h,Math.max(1,Math.floor(m/5))),dig(h,m>=55?m-5:m+5)],[`The short orange hand has gone past ${roman?ROMAN[h%12]+', which is '+h:h}. So the hour is ${h}.`,`The long blue hand: count in 5s to the last number it passed: ${five} minutes.`,`Count on the small marks: ${m-five} more makes ${m} minutes.`,`So it is ${ans}. We can also say ${timeWords(h,m)}.`]);}},
+ {id:'duration',name:'How long does it take?',year:'Year 3',yr:3,gen(){
+   if(Math.random()<.3)return factQ([['Seconds in a minute?',60,['The second hand goes all the way round in 1 minute.','There are 60 seconds in a minute.']],['Days in a week?',7,['Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday.','That is 7 days.']],['Months in a year?',12,['January to December is 12 months.']],['Days in a year?',365,['A year has 365 days.','A leap year has one extra day: 366.']],['Days in a leap year?',366,['A normal year has 365 days.','A leap year has 1 extra day in February: 366.']],['Days in September?',30,['30 days has September, April, June and November.']]]);
+   const h=rnd(1,10),m1=pick([0,5,10,15,20,25,30,35,40]),dur=pick([10,15,20,25,30,35,40,45]),end=h*60+m1+dur,h2=Math.floor(end/60),m2=end%60;
+   const cross=h2>h&&m2>0,steps=cross?[`From ${dig(h,m1)} to ${dig(h2,0)} is ${60-m1} minutes.`,`From ${dig(h2,0)} to ${dig(h2,m2)} is ${m2} minutes.`,`${60-m1} + ${m2} = ${dur} minutes.`]:[`Count on from ${dig(h,m1)} to ${dig(h2,m2)}.`,`That is ${dur} minutes.`];
+   return Q({text:`${dig(h,m1)} to ${dig(h2,m2)}`,speak:`The match starts at ${dig(h,m1)} and ends at ${dig(h2,m2)}. How many minutes does it last?`,ans:dur,cands:[dur+5,dur-5,dur+10,Math.abs(m2-m1),dur+1],vis:clockSVG(h,m1)+clockSVG(h2,m2),
+    exp:{vis:[cross?timeLineSVG([dig(h,m1),dig(h2,0),dig(h2,m2)],[`${60-m1} min`,`${m2} min`]):timeLineSVG([dig(h,m1),dig(h2,m2)],[`${dur} min`])],steps}});}},
+ /* ---------- Year 4 ---------- */
+ {id:'x67',name:'6 and 7 times tables',year:'Year 4',yr:4,quick:true,gen(){return tablesQ([6,7]);}},
+ {id:'x89',name:'8 and 9 times tables',year:'Year 4',yr:4,quick:true,gen(){return tablesQ([8,9]);}},
+ {id:'x1112',name:'11 and 12 times tables',year:'Year 4',yr:4,quick:true,gen(){return tablesQ([11,12]);}},
+ {id:'xall',name:'All times tables to 12 × 12',year:'Year 4',yr:4,quick:true,gen(){return timesQ(pick(TABLE_POOL),rnd(2,12),false);}},
+ {id:'div',name:'Division facts',year:'Year 4',yr:4,quick:true,gen(){const t=pick(TABLE_POOL),m=rnd(2,12),p=t*m;return Q({text:`${p} ÷ ${t} = ?`,speak:`What is ${p} divided by ${t}?`,ans:m,cands:[m+1,m-1,m+2,t===m?t+3:t,m*2],vis:'',exp:{vis:[arraySVG(m,t,true)],steps:['Dividing is the opposite of multiplying.',`Think: what times ${t} makes ${p}?`,`${m} × ${t} = ${p}.`,`So ${p} ÷ ${t} = ${m}.`]}});}},
+ {id:'fracequiv',name:'Equivalent fractions',year:'Year 4',yr:4,gen(){const [n,d]=pick([[1,2],[1,3],[2,3],[1,4],[3,4],[1,5],[2,5]]),f=pick([2,3,4]),N=n*f,D=d*f;
+   if(Math.random()<.6)return Q({text:`${fs(n,d)} = ?/${D}`,speak:`${fw(n,d)} is equal to what over ${D}?`,ans:N,cands:[N+1,N-1,n+f,D-N,n],vis:'',exp:{vis:[fbarsSVG([[n,d],[N,D]],[OR,BL])],steps:[`The bottom number went from ${d} to ${D}. That is × ${f}.`,`Do the same to the top: ${n} × ${f} = ${N}.`,`So ${fs(n,d)} = ${fs(N,D)}.`]}});
+   return Q({text:`${fs(N,D)} = ${n}/?`,speak:`${N} over ${D} is equal to ${n} over what?`,ans:d,cands:[d+1,d-1,D-N,D/2===d?d+2:D/2,n+1],vis:'',exp:{vis:[fbarsSVG([[N,D],[n,d]],[BL,OR])],steps:[`The top number went from ${N} to ${n}. That is ÷ ${f}.`,`Do the same to the bottom: ${D} ÷ ${f} = ${d}.`,`So ${fs(N,D)} = ${fs(n,d)}.`]}});}},
+ {id:'h24',name:'24-hour clock',year:'Year 4',yr:4,choice:true,gen(){const r=Math.random(),m=pick([0,5,10,15,20,25,30,35,40,45,50,55]);
+   if(r<.42){const h=rnd(1,11),ans=`${h+12}:${pad2(m)}`;return C3({text:`${dig(h,m)} pm = ?`,speak:`What is ${dig(h,m)} p m in 24-hour time?`,ans,vis:digitalSVG(`${dig(h,m)} pm`),exp:{vis:[digitalSVG(ans)],steps:['After midday, add 12 to the hours.',`${h} + 12 = ${h+12}.`,`So ${dig(h,m)} pm is ${ans}.`]}},shuffle([`${pad2(h)}:${pad2(m)}`,`${h+10}:${pad2(m)}`,`${h+2}:${pad2(m)}`]));}
+   if(r<.82){const H=rnd(13,23),h=H-12,ans=`${dig(h,m)} pm`;return C3({text:`${H}:${pad2(m)} = ?`,speak:`What is ${H} ${m?m:'hundred'} in 12-hour time?`,ans,vis:digitalSVG(`${H}:${pad2(m)}`),exp:{vis:[digitalSVG(ans)],steps:['24-hour times after 12:00 are in the afternoon or evening: pm.',`Take away 12 from the hours: ${H} − 12 = ${h}.`,`So ${H}:${pad2(m)} is ${ans}.`]}},shuffle([`${dig(H-10,m)} pm`,`${dig(h,m)} am`,`${dig(h<=10?h+2:h-2,m)} pm`]));}
+   const k=rnd(2,5);return Object.assign(Q({text:`${k} hours = ? minutes`,speak:`How many minutes are there in ${k} hours?`,ans:60*k,cands:[100*k,60*k+60,60*k-60,10*k,60*k+10],vis:'',exp:{vis:[],steps:['There are 60 minutes in 1 hour.',`${k} × 60 = ${60*k}.`,`So ${k} hours is ${60*k} minutes.`]}}),{choice:false});}},
+ {id:'add3d',name:'Adding 3-digit numbers',year:'Year 4',yr:4,gen(){const a=rnd(101,598),b=rnd(101,999-a),ans=a+b,D=n=>[Math.floor(n/100),Math.floor(n/10)%10,n%10];const [ah,at,ao]=D(a),[bh,bt,bo]=D(b);
+   const steps=[];let c=0;const col=(x,y,name,nxt)=>{const v=x+y+c,line=c?`${x} + ${y} + 1 carried = ${v}`:`${x} + ${y} = ${v}`;steps.push(`${name}: ${line}.${v>=10&&nxt?` Write ${v%10}, carry 1 to the ${nxt}.`:''}`);c=v>=10?1:0;};
+   col(ao,bo,'Ones','tens');col(at,bt,'Tens','hundreds');col(ah,bh,'Hundreds','');steps.push(`So ${a} + ${b} = ${ans}.`);
+   const noCarry=((ah+bh)%10)*100+((at+bt)%10)*10+(ao+bo)%10;return Q({text:`${a} + ${b} = ?`,speak:`What is ${a} add ${b}?`,ans,cands:[noCarry,ans+10,ans-10,ans+100,ans-100,ans+1],vis:'',exp:{vis:[columnSVG(a,b)],steps}});}},
+ {id:'mult2d',name:'Multiplying 2-digit numbers',year:'Year 4',yr:4,gen(){const t=rnd(1,4)*10,o=rnd(1,9),n=t+o,m=rnd(2,9),ans=n*m;
+   return Q({text:`${n} × ${m} = ?`,speak:`What is ${n} times ${m}?`,ans,cands:[t*m+o,ans+m,ans-m,ans+10,ans-10],vis:'',exp:{vis:[gridSVG(t,o,m)],steps:[`Split ${n} into ${t} and ${o}.`,`${t} × ${m} = ${t*m}.`,`${o} × ${m} = ${o*m}.`,`${t*m} + ${o*m} = ${ans}.`]}});}},
+ {id:'decfrac',name:'Fractions and decimals',year:'Year 4',yr:4,choice:true,gen(){
+   const P=[['1/2','0.5',['0.12','0.2','1.2'],['1/5','2/5']],['1/4','0.25',['0.14','0.4','1.4'],['2/5','1/25']],['3/4','0.75',['0.34','0.43','3.4'],['3/5','7/5']],['1/10','0.1',['0.01','1.1','0.11'],['1/1','1/100']],['3/10','0.3',['0.03','3.1','0.31'],['1/3','3/100']],['7/10','0.7',['0.07','7.1','0.71'],['1/7','7/100']],['1/5','0.2',['0.15','0.5','1.5'],['1/2','2/100']]];
+   const [f,dv,wd,wf]=pick(P),[n,d]=f.split('/').map(Number);
+   const steps=d===10?[`${f} means ${fw(n,10)}.`,`The first digit after the decimal point is tenths.`,`So ${f} = ${dv}.`]:d===5?['1/5 is the same as 2/10.','2 tenths is 0.2.',`So ${f} = ${dv}.`]:[`${f} of 1 whole is ${n} ÷ ${d}.`,`${n} ÷ ${d} = ${dv}.`,`So ${f} = ${dv}.`];
+   if(Math.random()<.55)return C3({text:`${f} = ?`,speak:`What is ${fw(n,d)} as a decimal?`,ans:dv,vis:fracShapeSVG(d,n,'bar'),exp:{vis:[fracShapeSVG(d,n,'bar')],steps}},shuffle(wd));
+   return C3({text:`${dv} = ?`,speak:`What is ${dv} as a fraction?`,ans:f,vis:'',exp:{vis:[fracShapeSVG(d,n,'bar')],steps}},shuffle(wf));}},
+ /* ---------- Year 5 and beyond ---------- */
+ {id:'fracadd2',name:'Adding fractions with different parts',year:'Year 5',yr:5,gen(){const D=pick([4,6,8,10,12]),d=pick([2,3,4,5,6].filter(x=>D%x===0&&x<D)),f=D/d,n=rnd(1,d-1),n2=rnd(1,Math.max(1,D-n*f-1)),ans=n*f+n2;
+   return Q({text:`${fs(n,d)} + ${fs(n2,D)} = ?/${D}`,speak:`${fw(n,d)} add ${fw(n2,D)} is how many ${DEN[D]?DEN[D][1]:'parts'}?`,ans,cands:[n+n2,ans+1,ans-1,n*f,n2+f],vis:'',exp:{vis:[fbarsSVG([[n*f,D],[n2,D]],[OR,BL])],steps:[`Make the bottom numbers the same. ${fs(n,d)} = ${fs(n*f,D)} (× ${f}).`,`Now add the parts: ${n*f} + ${n2} = ${ans}.`,`So the answer is ${fs(ans,D)}.`]}});}},
+ {id:'champion',name:'Champion mix',year:'Year 5 +',yr:5,gen(){return LEVEL_BY_ID[pick(['xall','div','add3d','sub2d','fracnon','fracadd','fracequiv','clockmin','h24','mult2d','decfrac','fracadd2','duration'])].gen();}}
 ];
-function makeQuestion(p){let lv=p.level,review=false;if(lv>=3&&Math.random()<.2){lv=rnd(Math.max(1,lv-2),lv-1);review=true;}const q=LEVELS[lv-1].gen();q.lv=lv;q.review=review;return q;}
-function recordResult(p,q,first){p.answered++;if(first)p.firstTry++;if(q.review)return null;
+const LEVEL_BY_ID={};LEVELS.forEach((L,i)=>{L.n=i+1;LEVEL_BY_ID[L.id]=L;});
+
+/* ---------- adaptive engine: frontier level + spaced-repetition refreshers ---------- */
+const TYPE_FROM=4,REVIEW_RATE=.3;
+const avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:0;
+function setLevel(p,n){p.level=Math.max(1,Math.min(LEVELS.length,n));p.lvId=LEVELS[p.level-1].id;}
+const canType=p=>p.level>=TYPE_FROM&&!LEVELS[p.level-1].choice;
+function skillStat(p,id){p.skills=p.skills||{};return p.skills[id]||(p.skills[id]={r:[],last:-999});}
+function reviewPool(p){const cur=LEVELS[p.level-1],out=[];for(let i=0;i<p.level-1;i++){const L=LEVELS[i],st=p.skills&&p.skills[L.id];const weak=st&&st.r.length>=3&&avg(st.r)<.75;if(L.yr>=cur.yr-1||weak)out.push(L);}return out;}
+function reviewWeight(p,L){const st=(p.skills||{})[L.id];let w;if(!st||!st.r.length)w=3;else{const a=avg(st.r.slice(-5));w=a<.6?30:a<.8?8:1;}
+ const ago=st?(p.qn||0)-st.last:40;w*=Math.min(2,.8+ago/30);if(p.level-L.n<=3)w*=1.3;return w;}
+function makeQuestion(p){let L=LEVELS[p.level-1],review=false;const pool=reviewPool(p);
+ if(pool.length&&Math.random()<REVIEW_RATE){const ws=pool.map(x=>reviewWeight(p,x));let r=Math.random()*ws.reduce((a,b)=>a+b,0);L=pool[pool.length-1];for(let i=0;i<pool.length;i++){r-=ws[i];if(r<=0){L=pool[i];break;}}review=true;}
+ let q,tries=0;do{q=L.gen();tries++;}while(tries<8&&(p.lastQ||[]).includes(q.text+'|'+q.ans));
+ p.lastQ=(p.lastQ||[]).concat(q.text+'|'+q.ans).slice(-6);
+ q.lv=L.n;q.lid=L.id;q.review=review;q.quick=!!L.quick;return q;}
+function recordResult(p,q,first){p.answered++;if(first)p.firstTry++;p.qn=(p.qn||0)+1;p.lastFast=false;
+ const st=skillStat(p,q.lid||LEVELS[q.lv-1].id);st.r.push(first?1:0);if(st.r.length>8)st.r.shift();st.last=p.qn;
+ if(q.review)return null;
  p.recent.push(first?1:0);if(p.recent.length>10)p.recent.shift();
- const sum=a=>a.reduce((x,y)=>x+y,0),st=p.stage||'pick';
- if(p.recent.length>=10&&sum(p.recent)>=8){p.recent=[];
-  if(st==='pick'&&p.level>=TYPE_FROM){p.stage='type';return 'type';}
-  if(p.level<LEVELS.length){p.level++;p.stage='pick';return 'up';}
+ const sum=a=>a.reduce((x,y)=>x+y,0),stage=p.stage||'pick';
+ const fast=p.recent.length===6&&sum(p.recent)===6,good=p.recent.length>=10&&sum(p.recent)>=8;
+ if(fast||good){p.recent=[];p.lastFast=fast;
+  if(stage==='pick'&&canType(p)){p.stage='type';return 'type';}
+  if(p.level<LEVELS.length){setLevel(p,p.level+1);p.stage='pick';return 'up';}
   return null;}
  if(p.recent.length>=6&&sum(p.recent.slice(-6))<=2){
-  if(st==='type'){p.stage='pick';p.recent=[];return 'down';}
-  if(p.level>1){p.level--;p.stage=p.level>=TYPE_FROM?'type':'pick';p.recent=[];return 'down';}}
+  if(stage==='type'){p.stage='pick';p.recent=[];return 'down';}
+  if(p.level>1){setLevel(p,p.level-1);p.stage=canType(p)?'type':'pick';p.recent=[];return 'down';}}
  return null;}
-const TYPE_FROM=4;
-const modeFor=(p,q)=>q.lv<TYPE_FROM?'pick':(p.stage||'pick');
+const modeFor=(p,q)=>(q.choice||q.lv<TYPE_FROM)?'pick':(p.stage||'pick');
+/* bring saves from the first version of the game onto the new, longer ladder */
+const OLD_LADDER=['count5','count10','moreless','add5','bonds10','add20','x2510','add2d1','tens','add2d','add2dx','x34','xall','champion'];
+function migrateProfile(p){if(!p||!p.level)return;
+ if(p.lvId&&LEVEL_BY_ID[p.lvId]){p.level=LEVEL_BY_ID[p.lvId].n;}
+ else{const id=OLD_LADDER[p.level-1]||'champion';setLevel(p,LEVEL_BY_ID[id].n);if(p.startLevel)p.startLevel=LEVEL_BY_ID[OLD_LADDER[p.startLevel-1]||'count5'].n;}
+ if(!canType(p))p.stage='pick';}
+Object.values(db.profiles).forEach(migrateProfile);save();
 
 /* ---------------- speech ---------------- */
 let voices=[];
 function loadVoices(){try{voices=speechSynthesis.getVoices()||[];}catch(e){}}
 if('speechSynthesis' in window){loadVoices();try{speechSynthesis.onvoiceschanged=loadVoices;}catch(e){}}
-const speakify=s=>s.replace(/×/g,' times ').replace(/\+/g,' add ').replace(/−/g,' take away ').replace(/=/g,' equals ').replace(/\?/g,'');
+const speakify=s=>s.replace(/(\d+)\/(\d+)/g,(m,n,d)=>fw(+n,+d)).replace(/\?\/(\d+)/g,'what over $1').replace(/÷/g,' divided by ').replace(/×/g,' times ').replace(/\+/g,' add ').replace(/−/g,' take away ').replace(/=/g,' equals ').replace(/\?/g,'');
 function say(t){if(!db.settings.voice||!('speechSynthesis' in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);const v=voices.find(v=>v.lang==='en-GB')||voices.find(v=>/^en/i.test(v.lang));if(v)u.voice=v;u.lang='en-GB';u.rate=.92;u.pitch=1.05;speechSynthesis.speak(u);}catch(e){}}
 function hush(){try{speechSynthesis.cancel();}catch(e){}}
 
@@ -882,17 +1075,17 @@ function refreshSetupPicks(){document.querySelectorAll('[data-a="kit"]').forEach
  document.querySelectorAll('[data-a="hair"]').forEach(b=>b.classList.toggle('sel',+b.dataset.v===SU.hair));
  const pv=$('#prev');if(pv)pv.innerHTML=bigFig({num:10,skin:SU.skin,hair:SU.hair},SU.kit,96);}
 function finishSetup(){const p=P();p.team=SU.team.trim().slice(0,22);p.kit=SU.kit;p.skin=SU.skin;p.hair=SU.hair;
- if(!SU.edit){p.level=SU.start;p.startLevel=SU.start;p.recent=[];p.season=newSeason(p,1);}save();renderHub();}
+ if(!SU.edit){setLevel(p,SU.start);p.startLevel=SU.start;p.recent=[];p.season=newSeason(p,1);}save();renderHub();}
 
 /* ---------------- hub ---------------- */
 function renderHub(){screen='hub';wantMusic(true,.1);const p=P();const L=LEVELS[p.level-1],s=p.season,opp=s.teams[nextOpp(s)];const pl=getPlayer(p,p.active);
  const dots=Array.from({length:10},(_,i)=>{const v=p.recent[i];return `<span class="dot ${v===1?'y':v===0?'n':''}"></span>`;}).join('');
- const right=p.recent.filter(x=>x).length,pro=(p.stage||'pick')==='type'&&p.level>=TYPE_FROM;const goal=p.level>=TYPE_FROM&&!pro?'unlock Pro mode':'level up';
+ const right=p.recent.filter(x=>x).length,ct=canType(p),pro=(p.stage||'pick')==='type'&&ct;const goal=ct&&!pro?'unlock Pro mode':'level up';
  const mini=p.trophies.slice(-6).map(t=>trophySVG(t.tier,44)).join('');
  render(`${topbar('profile')}
  <section class="card club">${shirtSVG(p.kit,10,86)}<div class="info"><p class="eyebrow">Manager ${esc(p.name)}</p><h1>${esc(p.team)}</h1>
   <div class="row"><span class="lvchip ${pro?'pro':''}">Level ${p.level}${pro?' Pro':''} · ${L.year}</span><span class="skill">${L.name}${pro?' · type the answers':''}</span></div>
-  <div class="prog" aria-label="Level progress">${dots}<small>${p.level<LEVELS.length?`${right} right first time · get 8 of 10 to ${goal}`:(pro?'Top level reached!':`${right} right first time · get 8 of 10 to unlock Pro mode`)}</small></div></div>
+  <div class="prog" aria-label="Level progress">${dots}<small>${p.level<LEVELS.length?`${right} right first time · get 8 of 10 (or the first 6 in a row) to ${goal}`:(pro||!ct?'Top level! Keep practising to stay sharp.':`${right} right first time · get 8 of 10 to unlock Pro mode`)}</small></div></div>
   <div class="coins">${coinSVG(28)} ${p.coins}</div></section>
  <section class="card next"><p class="eyebrow">Season ${s.n} · Game ${s.round+1} of 5</p>
   <div class="vs"><div class="vsteam">${shirtSVG(p.kit,10,64)}<b>${esc(p.team)}</b></div><span class="vsv">v</span><div class="vsteam">${shirtSVG(opp.color,9,64)}<b>${esc(opp.name)}</b></div></div>
@@ -958,28 +1151,28 @@ function addCoins(n,silent){const p=P();p.coins+=n;if(M)M.coins+=n;const c=$('#m
 function tick(){if(!M)return;const now=performance.now();if(M.running)M.elapsed+=now-M.last;M.last=now;const c=$('#clock');if(c)c.textContent=Math.min(90,Math.floor(M.elapsed/LIMIT*90))+"'";
  if(ac&&musG){let sp=false;try{sp=speechSynthesis.speaking;}catch(e){}const tv=Music.base*(sp?.3:1);if(Math.abs(tv-M.lastMv)>.001){try{musG.gain.setTargetAtTime(tv,ac.currentTime,.15);}catch(e){}M.lastMv=tv;}}
  if(M.elapsed>=LIMIT&&!M.timeUp){M.timeUp=true;if(M.state==='question')endMatch();}}
-function chipsHTML(){const names=['Pass','Pass','Pass','Shoot'];const q=M.q;return `<div class="chips">${names.map((n,i)=>`<span class="chip ${i<M.step?'done':i===M.step?'now':''}">${n}</span>`).join('')}${q?`<span class="chip lv">${q.review?'Warm-up':`Level ${q.lv}${M.mode==='type'?' Pro':''}`}</span>`:''}</div>`;}
+function chipsHTML(){const names=['Pass','Pass','Pass','Shoot'];const q=M.q;return `<div class="chips">${names.map((n,i)=>`<span class="chip ${i<M.step?'done':i===M.step?'now':''}">${n}</span>`).join('')}${q?`<span class="chip lv">${q.review?'Refresher':`Level ${q.lv}${M.mode==='type'?' Pro':''}`}</span>`:''}</div>`;}
 function waitPanel(t){const qp=$('#qp');if(qp)qp.innerHTML=`${chipsHTML()}<p class="wait">${t}</p>`;}
 async function startAttack(){M.state='banner';M.busy=true;M.running=false;M.step=0;M.q=null;placeTeams();updBoard();waitPanel('Get ready…');
  while(M&&M.levelUps.length){const lu=M.levelUps.shift();Sfx.fanfare();Sfx.cheer();
   if(lu.kind==='type'){say('Pro mode! Now you type the answers.');await banner('PRO MODE!<small>Now type your answers</small>',2400);}
-  else{say(`Level up! ${LEVELS[lu.level-1].name}.`);await banner(`LEVEL UP!<small>${LEVELS[lu.level-1].name}</small>`,2400);}}
+  else{say(`${lu.fast?'Fast track! ':''}Level up! ${LEVELS[lu.level-1].name}.`);await banner(`${lu.fast?'FAST TRACK!':'LEVEL UP!'}<small>${LEVELS[lu.level-1].name}</small>`,2400);}}
  if(!M)return;Sfx.whistle(1);await banner(`Attack ${M.attack+1}`,1100);if(!M)return;nextQuestion();}
 function nextQuestion(){if(!M)return;if(M.timeUp){endMatch();return;}const pp=P();M.q=makeQuestion(pp);M.mode=modeFor(pp,M.q);M.typed='';M.tries=0;M.state='question';M.busy=false;M.running=true;M.last=performance.now();M.qStart=performance.now();renderQ();say(M.q.speak);}
 function renderQ(){const q=M.q;const qp=$('#qp');if(!qp)return;
- qp.innerHTML=`${chipsHTML()}<div class="qrow"><div class="qtext">${esc(q.text)}</div><button class="speak" data-a="speak" aria-label="Read the question out loud"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="${INK}"/><path d="M16 8.5c1.3 1 1.3 6 0 7M18.5 6c2.6 2 2.6 10 0 12" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button></div>
- ${q.vis?`<div class="qvis">${q.vis}</div>`:''}${M.mode==='type'?`<div class="typed" id="typed"><span class="ph">?</span></div><div class="keypad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="key" data-a="key" data-v="${n}">${n}</button>`).join('')}<button class="key fn" data-a="key" data-v="del">Del</button><button class="key" data-a="key" data-v="0">0</button><button class="key go" data-a="key" data-v="go">Go</button></div>`:`<div class="answers">${q.opts.map(v=>`<button class="ans" data-a="ans" data-v="${v}">${v}</button>`).join('')}</div>`}<p class="fb" id="feedback" aria-live="polite"></p>`;}
+ qp.innerHTML=`${chipsHTML()}<div class="qrow"><div class="qtext${q.text.length>11?' long':''}">${fmtMath(esc(q.text))}</div><button class="speak" data-a="speak" aria-label="Read the question out loud"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z" fill="${INK}"/><path d="M16 8.5c1.3 1 1.3 6 0 7M18.5 6c2.6 2 2.6 10 0 12" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/></svg></button></div>
+ ${q.vis?`<div class="qvis">${q.vis}</div>`:''}${M.mode==='type'?`<div class="typed" id="typed"><span class="ph">?</span></div><div class="keypad">${[1,2,3,4,5,6,7,8,9].map(n=>`<button class="key" data-a="key" data-v="${n}">${n}</button>`).join('')}<button class="key fn" data-a="key" data-v="del">Del</button><button class="key" data-a="key" data-v="0">0</button><button class="key go" data-a="key" data-v="go">Go</button></div>`:`<div class="answers">${q.opts.map(v=>{const sv=String(v),cls=/^\d+\/\d+$/.test(sv)||/^\d+$/.test(sv)?'':/^[\d.:]+$/.test(sv)?' dec':' word';return `<button class="ans${cls}" data-a="ans" data-v="${esc(sv)}">${fmtMath(esc(sv))}</button>`;}).join('')}</div>`}<p class="fb" id="feedback" aria-live="polite"></p>`;}
 function fb(t,ok){const f=$('#feedback');if(f){f.textContent=t;f.className='fb'+(ok?' ok':'');}}
 function updTyped(){const t=$('#typed');if(t)t.innerHTML=M.typed?esc(M.typed):'<span class="ph">?</span>';}
 function onKey(v){if(!M||M.state!=='question'||M.mode!=='type'||M.busy)return;
- if(v==='go'){if(M.typed)submitValue(+M.typed,null);return;}
+ if(v==='go'){if(M.typed)submitValue(String(+M.typed),null);return;}
  if(v==='del')M.typed=M.typed.slice(0,-1);else if(M.typed.length<3)M.typed=(M.typed==='0'?'':M.typed)+v;
  Sfx.tick();updTyped();}
 function submitValue(v,btn){if(!M||M.busy||M.state!=='question')return;const q=M.q,p=P();
- if(v===q.ans){M.busy=true;M.state='anim';if(btn)btn.classList.add('right');else{const t=$('#typed');if(t)t.classList.add('right');}
+ if(String(v)===String(q.ans)){M.busy=true;M.state='anim';if(btn)btn.classList.add('right');else{const t=$('#typed');if(t)t.classList.add('right');}
   const first=M.tries===0;let c=first?2:1;
-  if(first&&q.lv>=13&&performance.now()-M.qStart<6000){c+=1;fb('Quick shot! +1 bonus coin',true);}else fb(first?'Yes!':'Got it!',true);
-  M.total++;if(first)M.firstTry++;const r=recordResult(p,q,first);if(r==='up'||r==='type'){const lu={kind:r,level:p.level};M.levelUps.push(lu);M.lvlLog.push(lu);}
+  if(first&&q.quick&&performance.now()-M.qStart<6000){c+=1;fb('Quick shot! +1 bonus coin',true);}else fb(first?'Yes!':'Got it!',true);
+  M.total++;if(first)M.firstTry++;const r=recordResult(p,q,first);if(r==='up'||r==='type'){const lu={kind:r,level:p.level,fast:!!p.lastFast};M.levelUps.push(lu);M.lvlLog.push(lu);}
   addCoins(c);save();Sfx.good();proceed();}
  else{M.tries++;Sfx.wrong();
   if(btn){btn.classList.add('wrong');btn.disabled=true;}else{M.typed='';updTyped();const t=$('#typed');if(t){t.classList.remove('shake');void t.getBoundingClientRect();t.classList.add('shake');}}
@@ -1008,7 +1201,7 @@ async function tackleAnim(k){const c=A['u'+k],o=nearestOpp(c.x,c.y);Sfx.tackle()
  const ty=150+pick([-1,1])*rnd(8,18);await Promise.all([ballTo(7,ty,900,26),moveA('k0',30,150-(ty>150?1:-1)*22,ty>150?70:-70,900)]);
  await tween(380,t=>{const el=$('#netL');if(el)el.setAttribute('transform',`translate(${Math.sin(t*30)*(1-t)*3} 0)`);});}
 function showExplain(){M.state='explain';M.running=false;M.busy=true;const q=M.q,e=q.exp;const qp=$('#qp');
- qp.innerHTML=`<div class="explain"><p class="eyebrow">The answer is ${q.ans}</p><h3>Let's work it out together</h3><div class="evis">${e.vis.join('')}</div><ol class="esteps">${e.steps.map(s=>`<li>${esc(s)}</li>`).join('')}</ol><button class="btn big" data-a="gotit">Got it!</button></div>`;
+ qp.innerHTML=`<div class="explain"><p class="eyebrow">The answer is ${fmtMath(esc(String(q.ans)))}</p><h3>Let's work it out together</h3>${e.vis.length?`<div class="evis">${e.vis.join('')}</div>`:''}<ol class="esteps">${e.steps.map(s=>`<li>${fmtMath(esc(s))}</li>`).join('')}</ol><button class="btn big" data-a="gotit">Got it!</button></div>`;
  say(speakify(`The answer is ${q.ans}. `+e.steps.join(' ')));}
 async function gotIt(){if(!M||M.state!=='explain')return;hush();M.state='anim';M.running=true;M.last=performance.now();waitPanel('Oh no, a slide tackle!');
  if(M.g3){Sfx.tackle();Sfx.ooh();await G3.tackle(M.step);if(!M)return;waitPanel('Oh no! They are counter-attacking…');
@@ -1016,7 +1209,7 @@ async function gotIt(){if(!M||M.state!=='explain')return;hush();M.state='anim';M
  else await tackleAnim(M.step);
  if(!M)return;M.them++;updBoard();await banner('They scored!<small>Keep going, you can do it!</small>',1800,'soft');if(!M)return;nextAttack();}
 function setShooting(on){const m=$('.match');if(m)m.classList.toggle('shooting',on);if(on){const pw=$('#pw');if(pw)pw.scrollIntoView({block:'start',behavior:RM?'auto':'smooth'});}setTimeout(()=>G3.resize(),60);setTimeout(()=>G3.resize(),420);}
-function startShot(){const p=P();M.state='shot';M.busy=true;M.young=p.level<=6;M.shotsLeft=M.young?2:1;setShooting(true);G3.shotCam();renderShotPanel();showSwipeHint();say('Swipe to shoot! Aim for a corner.');G3.enableSwipe(onSwipe);}
+function startShot(){const p=P();M.state='shot';M.busy=true;M.young=LEVELS[p.level-1].yr<=1;M.shotsLeft=M.young?2:1;setShooting(true);G3.shotCam();renderShotPanel();showSwipeHint();say('Swipe to shoot! Aim for a corner.');G3.enableSwipe(onSwipe);}
 function renderShotPanel(msg){const qp=$('#qp');if(!qp)return;const tot=M.young?2:1;
  qp.innerHTML=`${chipsHTML()}<div class="qtext shoot">Swipe to shoot!</div><p class="shothelp">Swipe up from the ball towards the goal. Aim for a corner. A harder swipe goes higher, but too hard goes over the bar.</p><div class="row" style="justify-content:center">${Array.from({length:tot},(_,i)=>`<span class="shotdot ${i<M.shotsLeft?'on':''}"></span>`).join('')}<span class="hint">${M.shotsLeft} ${M.shotsLeft===1?'shot':'shots'} left</span></div><p class="fb" id="feedback" aria-live="polite">${msg||''}</p>`;}
 function showSwipeHint(){const o=$('#pover');if(o)o.innerHTML='<div class="swipehint" aria-hidden="true"><div class="finger"></div></div>';}
@@ -1053,7 +1246,7 @@ function renderFulltime(x){screen='ft';wantMusic(true,.1);const p=P();const msg=
   <h1>${msg}</h1>${x.timeUp?'<p class="hint">The 5-minute clock ran out.</p>':''}
   <p>${x.firstTry} of ${x.total} right first time</p>
   <div class="coins">${coinSVG(28)} +${x.coins} coins</div>
-  ${x.levelUps.length?`<p class="lvup">${x.levelUps.map(l=>l.kind==='type'?`Pro mode unlocked on Level ${l.level}: now you type the answers!`:`Level up! Now on Level ${l.level}: ${LEVELS[l.level-1].name}`).join('<br>')}</p>`:''}
+  ${x.levelUps.length?`<p class="lvup">${x.levelUps.map(l=>l.kind==='type'?`Pro mode unlocked on Level ${l.level}: now you type the answers!`:`${l.fast?'Fast track! ':''}Level up! Now on Level ${l.level}: ${LEVELS[l.level-1].name}`).join('<br>')}</p>`:''}
   <div class="row" style="justify-content:center;margin-top:6px">${x.trophy?`<button class="btn big" data-a="trophy">Collect your trophy!</button>`:`<button class="btn big" data-a="kickoff">Next match</button><button class="btn alt" data-a="hub">Back to the club</button>`}</div>
  </section>
  <section class="card"><h2 style="margin-bottom:10px">${x.trophy?'Final table':'League table'}</h2>${tableHTML(x.season,p)}</section>`);}
@@ -1126,13 +1319,16 @@ function renderSettings(){screen='settings';const p=P();const acc=p.answered?Mat
  render(`${topbar('back')}
  <main class="card set"><div><p class="eyebrow">Grown-ups</p><h1>${esc(p.name)}'s settings</h1></div>
  <section><h2>Progress</h2><div class="stats"><div class="stat"><b>${p.level}</b><span>Level · ${LEVELS[p.level-1].year}</span></div><div class="stat"><b>${p.answered}</b><span>Questions answered</span></div><div class="stat"><b>${acc}%</b><span>Right first time</span></div><div class="stat"><b>${p.matches}</b><span>Matches played (${p.wins} won)</span></div></div></section>
- <section><h2>Level</h2><p class="hint" style="margin-bottom:10px">The game moves up a level after 8 of the last 10 answers are right first time, and back down if 4 of the last 6 are wrong. About 1 in 5 questions is a warm-up from an earlier level. You can also choose a level here.</p>
-  <div class="lvlist">${LEVELS.map((L,i)=>`<button class="lvi ${p.level===i+1?'sel':''}" data-a="setlv" data-v="${i+1}"><span class="n">${i+1}</span><div>${L.name}<small>${L.year}</small></div></button>`).join('')}</div></section>
- <section><h2>Answer style</h2><p class="hint" style="margin-bottom:10px">From Level 4, once a child gets 8 of 10 right by picking, the same level switches to Pro mode: they type the answer on a number pad. Levels 1 to 3 always use picking.</p><div class="row"><button class="btn small ${(p.stage||'pick')==='pick'?'':'alt'}" data-a="setstage" data-v="pick">Pick from 3</button><button class="btn small ${(p.stage||'pick')==='type'?'':'alt'}" data-a="setstage" data-v="type">Pro: type it in</button></div></section>
+ <section><h2>Level</h2><p class="hint" style="margin-bottom:10px">The levels follow the national curriculum from Reception to Year 4 and carry on into Year 5. A player moves up after 8 of their last 10 answers are right first time, or straight away if the first 6 on a level are all right. They move back if 4 of the last 6 are wrong. About 3 in 10 questions are refreshers from earlier levels, chosen more often when a skill is shaky or hasn't come up for a while. The percentage shows each skill's recent score. Tap a level to move there.</p>
+  ${levelListHTML(p)}</section>
+ <section><h2>Answer style</h2><p class="hint" style="margin-bottom:10px">From Level 4, on number levels, a player who gets 8 of 10 right by picking moves to Pro mode on the same level: they type the answer on a number pad. Clock, fraction and Levels 1 to 3 questions always use the answer buttons.</p><div class="row"><button class="btn small ${(p.stage||'pick')==='pick'?'':'alt'}" data-a="setstage" data-v="pick">Pick from 3</button><button class="btn small ${(p.stage||'pick')==='type'?'':'alt'}" data-a="setstage" data-v="type">Pro: type it in</button></div></section>
  <section><h2>Team</h2><button class="btn alt small" data-a="editTeam">Change team name, kit or player</button></section>
  ${curId==='neil'?`<section><h2>Test tools</h2><p class="hint" style="margin-bottom:10px">Only on Neil's profile, for checking the shop and trophies quickly.</p><div class="row"><button class="btn small" data-a="testCoins">Add 200 coins</button><button class="btn small" data-a="testSeason">Finish this season now</button></div></section>`:''}
  <section><h2>Start again</h2><button class="btn danger small" data-a="reset">Reset ${esc(p.name)}'s progress</button></section>
  <p class="hint">Progress is saved in this browser on this device only.</p></main>`);}
+function levelListHTML(p){const years=[...new Set(LEVELS.map(L=>L.year))];
+ return years.map(y=>`<div class="lvgroup"><h3>${y}</h3><div class="lvlist">${LEVELS.filter(L=>L.year===y).map(L=>{const st=(p.skills||{})[L.id],a=st&&st.r.length?Math.round(avg(st.r)*100):null;
+  return `<button class="lvi ${p.level===L.n?'sel':''}" data-a="setlv" data-v="${L.n}"><span class="n">${L.n}</span><div>${L.name}</div>${a===null?'':`<span class="acc ${a>=80?'good':a<60?'weak':''}">${a}%</span>`}</button>`;}).join('')}</div></div>`).join('');}
 function resetProfile(btn){if(!btn.dataset.armed){btn.dataset.armed='1';btn.textContent='Tap again to reset everything';return;}const name=P().name;db.profiles[curId]=blankProfile(name);save();startSetup(false);}
 function testSeason(){const p=P(),s=p.season;while(s.round<5){applyResult(s,0,nextOpp(s),2,0);simulateRound(s,s.round);s.round++;p.matches++;p.wins++;}finishSeason(p);save();renderTrophy();}
 
@@ -1146,11 +1342,11 @@ const actions={
  kit(b){SU.kit=b.dataset.v;refreshSetupPicks();},skin(b){SU.skin=+b.dataset.v;refreshSetupPicks();},hair(b){SU.hair=+b.dataset.v;refreshSetupPicks();},
  start(b){SU.start=+b.dataset.v;document.querySelectorAll('.lvopt').forEach(x=>x.classList.toggle('sel',x===b));updateGo();},
  finishSetup(){if(SU.team.trim()&&(SU.edit||SU.start))finishSetup();},
- kickoff(){kickoff();},speak(){if(M&&M.q)say(M.q.speak);},ans(b){submitValue(+b.dataset.v,b);},gotit(){gotIt();},leave(b){leaveMatch(b);},
+ kickoff(){kickoff();},speak(){if(M&&M.q)say(M.q.speak);},ans(b){submitValue(b.dataset.v,b);},gotit(){gotIt();},leave(b){leaveMatch(b);},
  trophy(){renderTrophy();},market(){renaming=null;renderMarket();},cabinet(){renderCabinet();},settings(){renderSettings();},
  buy(b){buy(b.dataset.id);},playas(b){const p=P();p.active=b.dataset.id;save();Sfx.good();renderMarket(true);},
  crpick(b){crPick(b);},createPl(){createPl();},rename(b){renaming=b.dataset.id;renderMarket(true);},saveName(b){saveName(b.dataset.id);},cancelName(){renaming=null;renderMarket(true);},
- setlv(b){const p=P();p.level=+b.dataset.v;p.stage='pick';p.recent=[];save();renderSettings();},
+ setlv(b){const p=P();setLevel(p,+b.dataset.v);p.stage='pick';p.recent=[];save();renderSettings();},
  setstage(b){const p=P();p.stage=b.dataset.v;p.recent=[];save();renderSettings();},
  choose(b){choose(b.dataset.v);},key(b){onKey(b.dataset.v);},
  editTeam(){startSetup(true);},reset(b){resetProfile(b);},

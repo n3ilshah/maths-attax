@@ -1,5 +1,5 @@
 // Maths Attax offline cache. Bump VERSION whenever you upload a new index.html.
-const VERSION = 'maths-attax-v1';
+const VERSION = 'maths-attax-v2';
 const CORE = [
   './', './index.html', './manifest.webmanifest',
   './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png',
